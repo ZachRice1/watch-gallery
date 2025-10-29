@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+  <title>Murray's Timepiece Collection 🕰️</title>
+
+
+</head>
+<style>
+        /* --- CAROUSEL ROOT VARIABLES --- */
+        :root {
+            /* Light Mode Variables */
+            --primary-color: #333;
+            --secondary-color: #f4f4f4;
+            --background-color: #ffffff;
+            --card-background: #fcfcfc;
+            --accent-color: #007bff;
+            --red-accent: #ff4d4d;
+            --random-color: #5cb85c; 
+            --card-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+
+            /* Dark Mode Variables */
+            --dark-primary-color: #f0f0f0;
+            --dark-secondary-color: #1a1523; 
+            --dark-background-color: #0f0a14; 
+            --dark-card-background: #2a203b;
+            --dark-accent-color: #9f8cff; 
+            --dark-red-accent: #ff7f7f;
+            --dark-random-color: #79d779;
+            --dark-card-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+            
+            /* Structural Variables */
+            --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --border-radius-large: 20px;
+            --border-radius-medium: 12px;
+            --slide-width: 80vw; 
+            --slide-height: 70vh; 
+            --peek-amount: 5vw; 
+        }
+
+        /* --- Theme Switching Logic --- */
+        body[data-theme='dark'] {
+            --primary-color: var(--dark-primary-color);
+            --secondary-color: var(--dark-secondary-color);
+            --background-color: var(--dark-background-color);
+            --card-background: var(--dark-card-background);
+            --accent-color: var(--dark-accent-color);
+            --red-accent: var(--dark-red-accent);
+            --random-color: var(--dark-random-color);
+            --card-shadow: var(--dark-card-shadow);
+            color: var(--primary-color);
+            background-color: var(--background-color);
+        }
+
+        body {
+            font-family: var(--font-family);
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color); 
+            color: var(--primary-color); 
+            line-height: 1.6;
+            transition: background-color 0.4s, color 0.4s;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        /* --- HEADER STYLES --- */
+        .app-header {
+            display: flex;
+            justify-content: center; 
+            align-items: center;
+            padding: 15px 30px;
+            background-color: var(--card-background); 
+            box-shadow: var(--card-shadow);
+            margin-bottom: 20px; 
+            position: relative; 
+            z-index: 100; 
+        }
+
+        .app-header-title {
+            font-size: 2.2em;
+            font-weight: 600;
+            color: var(--primary-color);
+            flex-grow: 1; 
+            text-align: center;
+            /* ADJUSTED FOR NEW 200px logo size */
+            margin-left: 220px; 
+            margin-right: 220px; 
+            white-space: nowrap; 
+        }
+        
+        body[data-theme='dark'] .app-header-title {
+            color: var(--dark-primary-color);
+        }
+
+        /* --- LOGO INTEGRATION STYLES (Adjusted for 200px size) --- */
+        .logo-placeholder {
+            position: absolute; 
+            right: 30px; 
+            top: 50%;
+            transform: translateY(-50%);
+            width: 200px; 
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Logo Container (The whole system) */
+        .logo-container {
+            position: relative;
+            width: 200px; 
+            height: 200px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden; 
+        }
+
+        /* --- The Central Clock Face (55px) --- */
+        .clock {
+            position: relative;
+            width: 55px; 
+            height: 55px; 
+            border-radius: 50%;
+            background: #ffffff;
+            border: 3px solid #333; 
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+        }
+
+        .center-pin {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 5px; 
+            height: 5px; 
+            background-color: #333;
+            border-radius: 50%;
+            z-index: 10;
+        }
+
+        /* --- Clock Hands (Adjusted for 55px clock) --- */
+        .hand {
+            position: absolute;
+            bottom: 50%;
+            left: calc(50% - 1.5px); 
+            width: 3px;
+            border-radius: 3px;
+            transform-origin: bottom center; 
+            background-color: #1a1a1a;
+            z-index: 5;
+            transition: transform 0.5s cubic-bezier(0.4, 2.3, 0.6, 1);
+        }
+
+        .hour {
+            height: 18px; 
+            width: 4px; 
+            left: calc(50% - 2px); 
+        }
+
+        .minute {
+            height: 25px; 
+        }
+
+        /* Curved Rotating Text Setup */
+        .curved-text-container {
+            position: absolute;
+            width: 200px; 
+            height: 200px; 
+            display: flex; 
+            justify-content: center;
+            align-items: center;
+            z-index: 5;
+            animation: orbit-circle 40s linear infinite; 
+        }
+
+        @keyframes orbit-circle {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .curved-text-char {
+            position: absolute;
+            font-size: 0.7em;
+            font-weight: 600;
+            color: #000;
+            height: 100%;          /* was 200px — now responsive */
+            left: 50%;
+            top: 0;
+            white-space: nowrap;
+        }
+
+        
+        /* Dark Mode for Logo */
+        body[data-theme='dark'] .clock {
+            background: #2a203b;
+            border-color: #f0f0f0;
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+        }
+        body[data-theme='dark'] .center-pin,
+        body[data-theme='dark'] .hand {
+            background-color: #f0f0f0; 
+        }
+        body[data-theme='dark'] .curved-text-char {
+            color: #ccc;
+        }
+
+        /* --- CAROUSEL STYLES (Unchanged) --- */
+
+        .container {
+            max-width: 100vw; 
+            margin: 3vh auto; 
+            padding: 0; 
+        }
+
+        .carousel-container {
+            position: relative; 
+            background-color: var(--secondary-color); 
+            box-shadow: none;
+            border-radius: var(--border-radius-large);
+            padding: 0;
+            margin-bottom: 30px;
+            overflow: hidden; 
+            height: calc(var(--slide-height) + 40px); 
+            display: flex;
+        }
+        
+        #carouselSlides {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+            padding: 20px 0; 
+            will-change: transform;
+        }
+        
+        #emptyStateContent {
+            display: none; 
+            height: var(--slide-height);
+            width: 100%;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            text-align: center;
+            background: var(--card-background); 
+            border-radius: var(--border-radius-medium);
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(100, 100, 100, 0.1);
+        }
+
+        .carousel-slide {
+            box-sizing: border-box; 
+            flex: 0 0 var(--slide-width); 
+            height: var(--slide-height);
+            margin: 0 var(--peek-amount); 
+            position: relative; 
+            overflow: hidden;
+            background-color: var(--card-background); 
+            box-shadow: var(--card-shadow);
+            border-radius: var(--border-radius-medium);
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+            padding: 10px; 
+            display: flex; 
+            align-items: center;
+            justify-content: center;
+            opacity: 0.5; 
+        }
+
+        .carousel-slide.active {
+            opacity: 1.0;
+            z-index: 2; 
+        }
+        
+        .watch-image {
+            width: 100%; 
+            height: 100%; 
+            object-fit: contain; 
+            position: absolute; 
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%); 
+            border-radius: var(--border-radius-medium); 
+        }
+
+        body[data-theme='dark'] .carousel-slide {
+             background-color: var(--dark-card-background); 
+        }
+        
+        /* --- WATCH DETAILS (Unchanged) --- */
+        .watch-details {
+            position: absolute;
+            bottom: 5%; 
+            right: 5%; 
+            width: 35%; 
+            min-width: 280px; 
+            max-height: 90%; 
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end; 
+            background-color: rgba(0, 0, 0, 0.05); 
+            backdrop-filter: blur(25px); 
+            border-radius: var(--border-radius-medium);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 5; 
+            text-align: left; 
+            overflow-y: auto; 
+            color: var(--primary-color);
+            border: 1px solid rgba(255, 255, 255, 0.5); 
+        }
+
+        body[data-theme='dark'] .watch-details {
+            background-color: rgba(255, 255, 255, 0.05); 
+            color: var(--dark-primary-color);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+        }
+        
+        .watch-details h2 {
+            margin-top: 0;
+            font-size: 1.8em;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 8px;
+            color: var(--primary-color);
+            text-transform: uppercase;      /* <= force ALL CAPS */
+            letter-spacing: 0.03em;         /* optional: a touch of spacing for readability */
+        }
+
+        body[data-theme='dark'] .watch-details h2 {
+            color: var(--dark-primary-color);
+        }
+
+        .add-slide {
+            background: linear-gradient(145deg, var(--card-background), var(--secondary-color));
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            text-align: center;
+        }
+
+        #addInCarouselButton {
+            width: 100px;
+            height: 100px;
+            background-color: var(--accent-color); 
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 3em;
+            line-height: 100px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
+            font-weight: 300;
+            margin-bottom: 20px;
+        }
+
+        .prev, .next {
+            cursor: pointer;
+            position: absolute;
+            top: 50%;
+            width: auto;
+            margin-top: -22px;
+            padding: 16px;
+            opacity: 0.6;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            color: var(--primary-color);
+            font-weight: bold;
+            font-size: 18px;
+            user-select: none;
+            background-color: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: var(--card-shadow);
+            z-index: 10;
+            border-radius: var(--border-radius-medium);
+        }
+
+        body[data-theme='dark'] .prev, body[data-theme='dark'] .next {
+            color: var(--dark-primary-color);
+            background-color: rgba(26, 21, 35, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .next { right: 30px; }
+        .prev { left: 30px; }
+        
+        #addWatchButtonFloating, #themeToggle, #randomButton, #editButtonFloating, #deleteButtonFloating {
+            position: fixed;
+            width: 60px;
+            height: 60px;
+            background-color: var(--red-accent); 
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 2.5em;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
+            z-index: 20; 
+            font-weight: 300;
+            display: flex; 
+            align-items: center;
+            justify-content: center;
+            line-height: 1; 
+        }
+        
+        #addWatchButtonFloating { bottom: 30px; right: 30px; font-size: 2.5em; }
+        #themeToggle { bottom: 30px; right: 100px; font-size: 1.2em; background-color: var(--accent-color); }
+        #randomButton { bottom: 30px; right: 170px; font-size: 1.2em; background-color: var(--random-color); }
+        #editButtonFloating { bottom: 30px; right: 240px; font-size: 1.2em; background-color: #ffaa00; display: none; }
+        #deleteButtonFloating { bottom: 30px; right: 310px; font-size: 1.2em; background-color: var(--red-accent); display: none; }
+        
+        .modal { 
+            display: none; 
+            position: fixed; 
+            z-index: 30; 
+            left: 0; 
+            top: 0; 
+            width: 100%; 
+            height: 100%; 
+            overflow: auto; 
+            background-color: rgba(0, 0, 0, 0.7); 
+            backdrop-filter: blur(15px); 
+            padding-top: 60px; 
+            transition: background-color 0.4s;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal[style*="display: block"] {
+            display: flex !important;
+        }
+
+        .modal-content { 
+            background-color: rgba(255, 255, 255, 0.3); 
+            margin: 5% auto; 
+            padding: 20px; 
+            border-radius: var(--border-radius-large); 
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); 
+            border: 1px solid rgba(255, 255, 255, 0.5); 
+            max-width: 600px; 
+            position: relative; 
+            color: var(--primary-color);
+            transition: background-color 0.4s;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        body[data-theme='dark'] .modal-content {
+            background-color: rgba(0, 0, 0, 0.15); 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .modal-content label {
+            display: block;
+            margin-top: 15px;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .modal-content input[type="text"],
+        .modal-content textarea,
+        .modal-content input[type="file"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid var(--secondary-color);
+            border-radius: var(--border-radius-medium);
+            box-sizing: border-box;
+            background-color: rgba(255, 255, 255, 0.8); 
+            color: var(--primary-color);
+        }
+        body[data-theme='dark'] .modal-content input[type="text"],
+        body[data-theme='dark'] .modal-content textarea {
+             background-color: rgba(0, 0, 0, 0.2);
+             border-color: rgba(255, 255, 255, 0.2);
+        }
+        .modal-content button[type="submit"] {
+            background-color: var(--accent-color);
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: var(--border-radius-medium);
+            cursor: pointer;
+            margin-top: 20px;
+            width: 100%;
+            font-size: 1.1em;
+            transition: background-color 0.3s;
+        }
+        
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            font-size: 30px;
+            font-weight: bold;
+            color: var(--primary-color);
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        /* --- MOBILE RESPONSIVENESS --- */
+        @media (max-width: 900px) {
+            :root {
+                --slide-width: 100vw; 
+                --slide-height: 75vh; 
+                --peek-amount: 0px; 
+            }
+
+            /* Slimmer header on mobile */
+            .app-header {
+                padding: 6px 10px;     /* was 10px 15px */
+                margin-bottom: 6px;    /* was 10px */
+            }
+
+            /* Smaller title on mobile */
+            .app-header-title {
+                margin: 4px 0 0 0;     /* was 10px 0 0 0 */
+                font-size: 1.25em;     /* was 1.8em */
+                line-height: 1.2;
+            }
+
+            .logo-placeholder {
+                position: relative; 
+                right: auto;
+                top: auto;
+                transform: none;
+                margin-bottom: 5px; 
+                order: 1; 
+            }
+            /* Reset logo position for mobile to fit inside its parent */
+            .logo-container {
+                position: relative;
+            }
+
+            .container {
+                margin: 2vh auto;
+                padding: 0 5px; 
+            }
+            
+            .carousel-container {
+                padding: 0;
+                height: calc(var(--slide-height) + 20px); 
+            }
+
+            .carousel-slide:not(.add-slide) {
+                flex-direction: column; 
+                justify-content: flex-start; 
+                align-items: center;
+                padding: 10px; 
+                margin: 0; 
+            }
+
+            .watch-image {
+                position: relative; 
+                width: 100%; 
+                height: 65%; 
+                left: 0;
+                top: 0;
+                transform: none; 
+                margin-bottom: 10px; 
+            }
+
+            /* --- MOBILE WATCH DETAILS (Stacking) --- */
+            .watch-details {
+                position: relative; /* Stacking below image */
+                bottom: auto; 
+                right: auto;
+                left: 0; 
+                transform: none; 
+                width: 100%; 
+                min-width: unset; 
+                max-height: 35%; 
+                padding: 10px 15px;
+                margin: 0; 
+                background-color: rgba(0, 0, 0, 0.05); 
+                backdrop-filter: blur(25px); 
+                box-shadow: var(--card-shadow);
+                border: 1px solid rgba(255, 255, 255, 0.5); 
+            }
+            
+            body[data-theme='dark'] .watch-details {
+                background-color: rgba(255, 255, 255, 0.05);
+                border: 1px solid rgba(255, 255, 255, 0.1); 
+            }
+
+            .watch-details h2 {
+                font-size: 1.5em;
+            }
+
+            .modal {
+                padding-top: 0; 
+            }
+            
+            .modal-content {
+                width: 90%; 
+                margin: 20px auto; 
+                max-height: 90vh; 
+            }
+
+            #addWatchButtonFloating { right: 10px; bottom: 10px; width: 50px; height: 50px; font-size: 2em; }
+            #themeToggle { right: 70px; bottom: 10px; width: 50px; height: 50px; }
+            #randomButton { right: 130px; bottom: 10px; width: 50px; height: 50px; }
+            #editButtonFloating { right: 190px; bottom: 10px; width: 50px; height: 50px; }
+            #deleteButtonFloating { right: 250px; bottom: 10px; width: 50px; height: 50px; }
+            .next { right: 10px; left: auto; }
+            .prev { left: 10px; right: auto; }
+
+
+            
+            .logo-placeholder,
+            .logo-container,
+            .curved-text-container {
+                width: 160px;          /* was 200px */
+                height: 160px;         /* was 200px */
+            }
+
+            /* Optional: slightly smaller clock face on mobile for balance */
+            .clock {
+                width: 45px;           /* was 55px */
+                height: 45px;          /* was 55px */
+            }
+
+            /* Keep the carousel controls tight too (already smaller, but a touch more) */
+            .prev, .next {
+                padding: 12px;         /* was 16px */
+                font-size: 16px;       /* was 18px */
+            }
+        }
+
+    /* Make the new gear button match the other FABs */
+    #settingsButtonFloating {
+      position: fixed;
+      width: 60px;
+      height: 60px;
+      background-color: var(--accent-color);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      font-size: 1.6em;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: var(--card-shadow);
+      transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
+      z-index: 20;
+      font-weight: 300;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      bottom: 30px;
+      right: 380px; /* sits just to the left of the delete button */
+    }
+    body[data-theme='dark'] #settingsButtonFloating {
+      background-color: var(--dark-accent-color);
+      color: var(--dark-primary-color);
+    }
+
+    /* Buttons inside the Settings modal */
+    .settings-actions {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .settings-actions .action {
+      background-color: var(--accent-color);
+      color: white;
+      padding: 12px 16px;
+      border: none;
+      border-radius: var(--border-radius-medium);
+      cursor: pointer;
+      font-size: 1.05em;
+      transition: background-color 0.3s;
+      width: 100%;
+      text-align: center;
+    }
+    body[data-theme='dark'] .settings-actions .action {
+      background-color: var(--dark-accent-color);
+      color: var(--dark-primary-color);
+    }
+    .settings-actions .hint {
+      margin-top: 8px;
+      font-size: 0.9em;
+      opacity: 0.75;
+    }
+
+    /* Mobile positions, matching your existing scheme */
+    @media (max-width: 900px) {
+      #settingsButtonFloating {
+        right: 310px;  /* after delete @ 250px */
+        width: 50px;
+        height: 50px;
+        font-size: 1.3em;
+        bottom: 10px;
+      }
+    }
+    </style>
+
+
+<body data-theme="light">
+
+  <header class="app-header">
+    <h1 class="app-header-title">Murray's Watch Collection</h1>
+
+    <div class="logo-placeholder">
+      <div class="logo-container">
+        <div class="clock">
+          <div class="hand hour" id="hourHand"></div>
+          <div class="hand minute" id="minuteHand"></div>
+          <div class="center-pin"></div>
+        </div>
+
+        <div class="curved-text-container" id="curvedTextContainer"></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="carousel-container" id="carouselContainer">
+      <div id="emptyStateContent">
+        <button id="addInCarouselButton" onclick="openModal('addWatchModal')">+</button>
+        <h2>Collection Empty</h2>
+        <p style="font-size: 1.1em; margin:0; font-weight:bold; color: #888;">
+          Click the + button to add the first watch to the collection!
+        </p>
+      </div>
+
+      <div id="carouselSlides"></div>
+
+      <button class="prev" onclick="plusSlides(-1)">&#10094;</button>
+      <button class="next" onclick="plusSlides(1)">&#10095;</button>
+    </div>
+  </div>
+
+  <button id="addWatchButtonFloating" onclick="openModal('addWatchModal')">+</button>
+  <button id="randomButton" onclick="goToRandomSlide()">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="16 16 12 16 12 8 8 8"></polyline>
+      <path d="M2 13v-2A10 10 0 0 1 20 12c0 2-1 4-2 6"></path>
+      <path d="M22 11v2A10 10 0 0 1 4 12c0-2 1-4 2-6"></path>
+    </svg>
+  </button>
+  <button id="editButtonFloating" onclick="openEditModalForCurrentSlide()">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 20h9"></path>
+      <path d="M16.5 3.5l4 4L7.5 19H3v-4L16.5 3.5z"></path>
+    </svg>
+  </button>
+  <button id="deleteButtonFloating" onclick="deleteWatch()">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="3 6 5 6 21 6"></polyline>
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+      <line x1="10" y1="11" x2="10" y2="17"></line>
+      <line x1="14" y1="11" x2="14" y2="17"></line>
+    </svg>
+  </button>
+
+  <!-- NEW: Gear button to open Settings modal -->
+  <button id="settingsButtonFloating" onclick="openModal('settingsModal')" aria-label="Settings">
+    <!-- Gear icon -->
+    <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+         stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"></circle>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c0 .69.28 1.35.78 1.82.5.47 1.16.74 1.85.74H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+    </svg>
+  </button>
+
+  <button id="themeToggle" onclick="toggleTheme()"></button>
+
+  <!-- Add Watch Modal -->
+  <div id="addWatchModal" class="modal">
+    <div class="modal-content">
+      <span class="close-button" onclick="closeModal('addWatchModal')">&times;</span>
+      <h2>➕ Add a New Watch to the Collection</h2>
+      <form id="addWatchForm">
+        <label for="watchTitle">Watch Title (e.g., Rolex Submariner):</label>
+        <input type="text" id="watchTitle" required>
+
+        <label for="watchNotes">Notes/Description:</label>
+        <textarea id="watchNotes" required></textarea>
+
+        <label for="watchImage">Watch Image (JPEG/PNG/HEIC/HEIF):</label>
+        <input 
+          type="file" 
+          id="watchImage" 
+          accept="image/jpeg,image/png,image/heic,image/heif,.heic,.heif" 
+          required
+        >
+        
+        <button type="submit">Add Watch to Collection</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Watch Modal -->
+  <div id="editWatchModal" class="modal">
+    <div class="modal-content">
+      <span class="close-button" onclick="closeModal('editWatchModal')">&times;</span>
+      <h2>✏️ Edit Watch Information</h2>
+      <form id="editWatchForm">
+        <input type="hidden" id="editWatchIndex">
+
+        <label for="editWatchTitle">Watch Title:</label>
+        <input type="text" id="editWatchTitle" required>
+
+        <label for="editWatchNotes">Notes/Description:</label>
+        <textarea id="editWatchNotes" required></textarea>
+
+        <label for="editWatchImage">Replace Watch Image (Optional):</label>
+        <input 
+          type="file" 
+          id="editWatchImage" 
+          accept="image/jpeg,image/png,image/heic,image/heif,.heic,.heif"
+        >
+        
+        <button type="submit">Save Changes</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- NEW: Settings Modal (houses auto-save + export/import) -->
+  <div id="settingsModal" class="modal">
+    <div class="modal-content settings-modal">
+      <span class="close-button" onclick="closeModal('settingsModal')">&times;</span>
+      <h2>⚙️ Settings</h2>
+      <div class="settings-actions">
+        <button type="button" class="action" id="enableAutosaveAction">Enable Auto-Save (Desktop Chrome/Edge)</button>
+        <button type="button" class="action" id="saveHtmlAction">Save HTML to iCloud (Replace)</button>
+        <button type="button" class="action" id="saveJsonAction">Save JSON to iCloud (Replace)</button>
+        <button type="button" class="action" id="importJsonAction">Import JSON</button>
+        <input type="file" id="importJsonFile" accept="application/json" style="display:none;">
+        <p class="hint">On iPhone/iPad, “Save” opens the Files sheet so you can tap <b>Replace</b> on the same file.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Embedded data that travels with the file -->
+  <script id="bootstrapData" type="application/json"></script>
+
+  <script>
+    // ---------------------------
+    // Real clock + curved text
+    // ---------------------------
+
+    const hourHand = document.getElementById('hourHand');
+    const minuteHand = document.getElementById('minuteHand');
+    const textContainer = document.getElementById('curvedTextContainer');
+    const textToCurve = "MURRAYS TIMEPIECE COLLECTION ";
+    const clockEl = document.querySelector('.clock');
+
+    function generateCurvedText() {
+      if (!textContainer || !clockEl) return;
+      textContainer.innerHTML = '';
+
+      const containerSize = Math.min(textContainer.offsetWidth || 200,
+                                     textContainer.offsetHeight || 200);
+      const center = containerSize / 2;
+
+      const clockRadius = clockEl.offsetWidth / 2;
+      const padding = 10;
+      const radius = clockRadius + padding;
+
+      const chars = textToCurve.split('');
+      const angleStep = 360 / chars.length;
+
+      for (let i = 0; i < chars.length; i++) {
+        const ch = chars[i] === ' ' ? '\u00A0' : chars[i];
+        const el = document.createElement('span');
+        el.className = 'curved-text-char';
+        el.textContent = ch;
+        el.style.height = containerSize + 'px';
+        el.style.transformOrigin = `0 ${center}px`;
+        const rotation = (i * angleStep) - 90;
+        el.style.transform = `
+          rotate(${rotation}deg)
+          translateY(${radius}px)
+          translateX(-50%)
+        `;
+        textContainer.appendChild(el);
+      }
+    }
+
+    function updateClock() {
+      if (!hourHand || !minuteHand) return;
+      const now = new Date();
+      const h = now.getHours() % 12;
+      const m = now.getMinutes();
+      const s = now.getSeconds();
+
+      const minuteDegrees = (m + s / 60) * 6;
+      const hourDegrees = (h + m / 60 + s / 3600) * 30;
+
+      minuteHand.style.transform = `rotate(${minuteDegrees}deg)`;
+      hourHand.style.transform = `rotate(${hourDegrees}deg)`;
+    }
+
+    // ---------------------------
+    // Theme + general UI
+    // ---------------------------
+
+    const LIGHT_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
+    const DARK_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
+
+    const STORAGE_KEY = 'dadWatchCollection';
+    const THEME_KEY = 'dadWatchTheme';
+    let watchCollection = [];
+    let slideIndex = 1;
+
+    const emptyState = document.getElementById('emptyStateContent');
+    const carouselSlides = document.getElementById('carouselSlides');
+    const floatingButton = document.getElementById('addWatchButtonFloating');
+    const themeToggle = document.getElementById('themeToggle');
+    const randomButton = document.getElementById('randomButton');
+    const editButtonFloating = document.getElementById('editButtonFloating');
+    const deleteButtonFloating = document.getElementById('deleteButtonFloating');
+    const carouselContainer = document.getElementById('carouselContainer');
+
+    let slideWidth = 0;
+    let peekAmount = 0;
+
+    function toggleTheme() {
+      const body = document.body;
+      const currentTheme = body.getAttribute('data-theme');
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+      body.setAttribute('data-theme', newTheme);
+      localStorage.setItem(THEME_KEY, newTheme);
+      themeToggle.innerHTML = newTheme === 'light' ? LIGHT_ICON : DARK_ICON;
+    }
+
+    function loadTheme() {
+      const savedTheme = localStorage.getItem(THEME_KEY) || 'light';
+      document.body.setAttribute('data-theme', savedTheme);
+      themeToggle.innerHTML = savedTheme === 'light' ? LIGHT_ICON : DARK_ICON;
+    }
+
+    function goToRandomSlide() {
+      if (watchCollection.length === 0) {
+        showSlides(1);
+        return;
+      }
+      const randomIndex = Math.floor(Math.random() * watchCollection.length);
+      const randomSlideIndex = randomIndex + 1;
+      showSlides(randomSlideIndex);
+    }
+
+    function openModal(modalId) { 
+      document.getElementById(modalId).style.display = "block"; 
+    }
+
+    function closeModal(modalId) { 
+      document.getElementById(modalId).style.display = "none"; 
+      if (modalId === 'addWatchModal') {
+        document.getElementById('addWatchForm').reset();
+      } else if (modalId === 'editWatchModal') {
+        document.getElementById('editWatchForm').reset();
+      }
+    }
+
+    window.onclick = function(event) { 
+      if (event.target == document.getElementById('addWatchModal')) { 
+        closeModal('addWatchModal');
+      } else if (event.target == document.getElementById('editWatchModal')) { 
+        closeModal('editWatchModal');
+      } else if (event.target == document.getElementById('settingsModal')) {
+        closeModal('settingsModal');
+      }
+    }
+
+    function saveCollectionLocalCache() { 
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(watchCollection)); 
+    }
+
+    // ---------------------------
+    // HEIC support
+    // ---------------------------
+    function ensureHeic2any() {
+      if (typeof window.heic2any !== "undefined") return Promise.resolve();
+      return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';
+        s.onload = () => resolve();
+        s.onerror = () => reject(new Error('Failed to load heic2any'));
+        document.head.appendChild(s);
+      });
+    }
+
+    async function convertHeicToJpeg(file) {
+      const name = (file?.name || '').toLowerCase();
+      const type = (file?.type || '').toLowerCase();
+      const isHeic = name.endsWith('.heic') || name.endsWith('.heif') || type.includes('heic') || type.includes('heif');
+      if (!isHeic) return file;
+
+      try {
+        await ensureHeic2any();
+        const blob = await window.heic2any({
+          blob: file,
+          toType: 'image/jpeg',
+          quality: 0.9
+        });
+        return new File([blob], name.replace(/\.hei[cf]$/i, '.jpg'), { type: 'image/jpeg' });
+      } catch (err) {
+        console.error('HEIC conversion failed:', err);
+        return file;
+      }
+    }
+
+    // ---------------------------
+    // Embedded data (travels with the file)
+    // ---------------------------
+
+    function readBootstrapData() {
+      try {
+        const tag = document.getElementById('bootstrapData');
+        if (!tag) return null;
+        const txt = tag.textContent?.trim();
+        if (!txt) return null;
+        return JSON.parse(txt);
+      } catch (e) {
+        console.warn('Failed to parse embedded bootstrap data:', e);
+        return null;
+      }
+    }
+
+    function persistToBootstrap() {
+      const tag = document.getElementById('bootstrapData');
+      if (tag) tag.textContent = JSON.stringify(watchCollection);
+    }
+
+    // ---------------------------
+    // Cross-platform save helpers (HTML + JSON)
+    // ---------------------------
+
+    // Optional: File System Access (desktop Chromium) handle for true overwrite
+    let autosaveHandle = null;
+
+    function fsaSupported() {
+      return !!(window.isSecureContext && 'showSaveFilePicker' in window);
+    }
+
+    async function enableAutosave() {
+      if (!fsaSupported()) {
+        alert("Auto-Save to the same file isn’t supported on this browser. Use 'Save HTML/JSON' to replace the file in iCloud.");
+        return;
+      }
+      try {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: 'murrays-timepiece-collection.html',
+          types: [{ description: 'HTML File', accept: {'text/html': ['.html', '.htm']} }]
+        });
+        autosaveHandle = handle;
+        alert('Auto-Save enabled for desktop. I will write in place when you choose “Save HTML”.');
+      } catch (e) {
+        // user canceled, ignore
+      }
+    }
+
+    function buildCurrentHTMLString() {
+      const clone = document.documentElement.cloneNode(true);
+      const clonedBootstrap = clone.querySelector('#bootstrapData');
+      if (clonedBootstrap) clonedBootstrap.textContent = JSON.stringify(watchCollection);
+      return '<!DOCTYPE html>\n' + clone.outerHTML;
+    }
+
+    async function shareFileIfPossible(file, title, text) {
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title, text });
+          return true; // user shared via iOS Files sheet
+        } catch (_) {}
+      }
+      return false;
+    }
+
+    function downloadFile(file, suggestedName) {
+      const url = URL.createObjectURL(file);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = suggestedName;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }, 0);
+    }
+
+    async function saveHTMLCrossPlatform(filename = 'murrays-timepiece-collection.html') {
+      // Try true in-place write first (desktop Chromium with Auto-Save enabled)
+      if (autosaveHandle) {
+        try {
+          const writable = await autosaveHandle.createWritable();
+          await writable.write(buildCurrentHTMLString());
+          await writable.close();
+          return;
+        } catch (e) {
+          console.warn('Auto-save write failed; falling back:', e);
+        }
+      }
+      // Share sheet on iOS (lets user tap Replace)
+      const htmlText = buildCurrentHTMLString();
+      const file = new File([htmlText], filename, { type: 'text/html' });
+      const shared = await shareFileIfPossible(file, "Murray’s Timepieces", "Save to iCloud Drive");
+      if (shared) return;
+
+      // Download fallback (macOS Safari etc.)
+      downloadFile(file, filename);
+    }
+
+    async function saveJSONCrossPlatform(filename = 'murrays-timepieces.json') {
+      const json = JSON.stringify(watchCollection, null, 2);
+      const file = new File([json], filename, { type: 'application/json' });
+      const shared = await shareFileIfPossible(file, "Murray’s Timepieces (JSON)", "Save to iCloud Drive");
+      if (shared) return;
+      downloadFile(file, filename);
+    }
+
+    async function saveCollectionAfterChange() {
+      // Keep embedded and local cache synced
+      persistToBootstrap();
+      saveCollectionLocalCache();
+
+      // Choose your preferred artifact:
+      // A) One-file approach (recommended)
+      await saveHTMLCrossPlatform();
+
+      // B) If you prefer a sidecar JSON instead, comment the line above
+      //    and uncomment the line below:
+      // await saveJSONCrossPlatform();
+    }
+
+    // ---------------------------
+    // Add / Edit / Delete
+    // ---------------------------
+
+    document.getElementById('addWatchForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const title = document.getElementById('watchTitle').value;
+      const notes = document.getElementById('watchNotes').value;
+      let imageFile = document.getElementById('watchImage').files[0];
+      
+      if (imageFile) {
+        imageFile = await convertHeicToJpeg(imageFile);
+
+        const reader = new FileReader();
+        reader.onload = async function(event) {
+          const newWatch = {
+            title,
+            notes,
+            image: event.target.result
+          };
+          watchCollection.push(newWatch);
+          persistToBootstrap();
+          saveCollectionLocalCache();
+          closeModal('addWatchModal');
+          slideIndex = watchCollection.length;
+          renderCollection();
+          await saveCollectionAfterChange();
+        };
+        reader.readAsDataURL(imageFile);
+      }
+    });
+
+    document.getElementById('editWatchForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const index = parseInt(document.getElementById('editWatchIndex').value, 10);
+      const newTitle = document.getElementById('editWatchTitle').value;
+      const newNotes = document.getElementById('editWatchNotes').value;
+      let newImageFile = document.getElementById('editWatchImage').files[0];
+
+      if (index >= 0 && index < watchCollection.length) {
+        watchCollection[index].title = newTitle;
+        watchCollection[index].notes = newNotes;
+
+        if (newImageFile) {
+          newImageFile = await convertHeicToJpeg(newImageFile);
+
+          const reader = new FileReader();
+          reader.onload = async function(event) {
+            watchCollection[index].image = event.target.result;
+            persistToBootstrap();
+            saveCollectionLocalCache();
+            closeModal('editWatchModal');
+            renderCollection();
+            await saveCollectionAfterChange();
+          };
+          reader.readAsDataURL(newImageFile);
+        } else {
+          persistToBootstrap();
+          saveCollectionLocalCache();
+          closeModal('editWatchModal');
+          renderCollection();
+          await saveCollectionAfterChange();
+        }
+      }
+    });
+
+    async function deleteWatch() {
+      const watchIndex = slideIndex - 1;
+      if (watchCollection.length === 0 || slideIndex > watchCollection.length) return;
+
+      const watchTitle = watchCollection[watchIndex].title;
+      if (confirm(`Are you sure you want to delete the watch: "${watchTitle}"?`)) {
+        watchCollection.splice(watchIndex, 1);
+        persistToBootstrap();
+        saveCollectionLocalCache();
+        slideIndex = Math.min(slideIndex, Math.max(1, watchCollection.length));
+        renderCollection();
+        await saveCollectionAfterChange();
+      }
+    }
+
+    function openEditModalForCurrentSlide() {
+      if (slideIndex > watchCollection.length || watchCollection.length === 0) return;
+      const watchIndex = slideIndex - 1; 
+      const watch = watchCollection[watchIndex];
+
+      document.getElementById('editWatchIndex').value = watchIndex;
+      document.getElementById('editWatchTitle').value = watch.title;
+      document.getElementById('editWatchNotes').value = watch.notes;
+      document.getElementById('editWatchImage').value = '';
+
+      openModal('editWatchModal');
+    }
+
+    // ---------------------------
+    // Carousel
+    // ---------------------------
+
+    function getCSSVars() {
+      const computedStyle = getComputedStyle(document.documentElement);
+      const rawSlideWidth = computedStyle.getPropertyValue('--slide-width');
+      const rawPeekAmount = computedStyle.getPropertyValue('--peek-amount');
+
+      const tempDiv = document.createElement('div');
+      tempDiv.style.visibility = 'hidden';
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.width = rawSlideWidth;
+      document.body.appendChild(tempDiv);
+      slideWidth = tempDiv.offsetWidth;
+      tempDiv.style.width = rawPeekAmount;
+      peekAmount = tempDiv.offsetWidth;
+      document.body.removeChild(tempDiv);
+    }
+
+    function renderCollection() {
+      carouselSlides.innerHTML = ''; 
+      const totalSlides = watchCollection.length + 1;
+
+      if (watchCollection.length === 0) {
+        carouselSlides.style.display = 'none';
+        emptyState.style.display = 'flex';
+        document.querySelectorAll('.prev, .next').forEach(btn => btn.style.display = 'none');
+        floatingButton.style.display = 'block';
+        randomButton.style.display = 'none';
+        editButtonFloating.style.display = 'none';
+        deleteButtonFloating.style.display = 'none';
+        return;
+      }
+      
+      emptyState.style.display = 'none';
+      carouselSlides.style.display = 'flex';
+      document.querySelectorAll('.prev, .next').forEach(btn => btn.style.display = 'block');
+      randomButton.style.display = 'flex';
+
+      watchCollection.forEach((watch, index) => {
+        const slide = document.createElement('div');
+        slide.className = 'carousel-slide';
+        slide.setAttribute('data-index', index + 1);
+        slide.setAttribute('data-watch-index', index);
+        
+        slide.innerHTML = `
+          <img class="watch-image" src="${watch.image}" alt="${watch.title}">
+          <div class="watch-details">
+              <h2>${watch.title}</h2>
+              <p><strong>Notes:</strong></p>
+              <p>${watch.notes}</p>
+          </div>
+        `;
+        carouselSlides.appendChild(slide);
+      });
+      
+      const addSlide = document.createElement('div');
+      addSlide.className = 'carousel-slide add-slide';
+      addSlide.setAttribute('data-index', totalSlides);
+      addSlide.innerHTML = `
+        <button id="addInCarouselButton" onclick="openModal('addWatchModal')">+</button>
+        <h2>Add a New Watch</h2>
+        <p style="font-size: 1.1em; color: var(--primary-color);">
+            Click the button above to catalog a new timepiece.
+        </p>
+      `;
+      carouselSlides.appendChild(addSlide);
+      
+      slideIndex = Math.min(Math.max(1, slideIndex), totalSlides);
+      showSlides(slideIndex);
+    }
+
+    function plusSlides(n) {
+      const totalSlides = watchCollection.length + 1;
+      let newIndex = slideIndex + n;
+      if (newIndex > totalSlides) newIndex = 1;
+      else if (newIndex < 1) newIndex = totalSlides;
+      showSlides(newIndex);
+    }
+
+    function showSlides(n) {
+      const slides = document.getElementsByClassName("carousel-slide");
+      if (slides.length === 0) {
+        editButtonFloating.style.display = 'none';
+        deleteButtonFloating.style.display = 'none';
+        return;
+      }
+
+      if (n > slides.length) n = 1;
+      if (n < 1) n = slides.length;
+      
+      slideIndex = n;
+      getCSSVars();
+
+      const isMobile = window.innerWidth <= 900;
+      const slideBlockWidth = isMobile ? slideWidth : slideWidth + (2 * peekAmount);
+      
+      const translateValue = ((n - 1) * slideBlockWidth) + (slideBlockWidth / 2);
+      const centerOffset = (carouselContainer.offsetWidth / 2);
+      const transformX = centerOffset - translateValue;
+
+      carouselSlides.style.transform = `translateX(${transformX}px)`;
+
+      for (let i = 0; i < slides.length; i++) {
+        slides[i].classList.remove('active');
+      }
+      slides[slideIndex - 1].classList.add('active');
+      
+      const isAddSlide = slideIndex === slides.length;
+      editButtonFloating.style.display = isAddSlide ? 'none' : 'flex';
+      deleteButtonFloating.style.display = isAddSlide ? 'none' : 'flex';
+    }
+
+    // ---------------------------
+    // Import / Settings wiring
+    // ---------------------------
+
+    function importJSONFromFile(file) {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const parsed = JSON.parse(reader.result);
+          if (!Array.isArray(parsed)) throw new Error('Invalid JSON format');
+          watchCollection = parsed;
+          persistToBootstrap();
+          saveCollectionLocalCache();
+          renderCollection();
+          await saveCollectionAfterChange(); // immediately save back
+        } catch (e) {
+          alert('Could not import JSON: ' + e.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // ---------------------------
+    // Init
+    // ---------------------------
+
+    function loadCollection() {
+      // Clock + curved text
+      generateCurvedText();
+      updateClock();
+      setInterval(updateClock, 1000);
+
+      // Theme
+      loadTheme();
+
+      // Resize listeners
+      window.addEventListener('resize', () => {
+        getCSSVars();
+        showSlides(slideIndex);
+        generateCurvedText();
+      });
+      getCSSVars();
+
+      // Load data (embedded first, then localStorage)
+      const embedded = readBootstrapData();
+      if (embedded && Array.isArray(embedded)) {
+        watchCollection = embedded;
+      } else {
+        const storedCollection = localStorage.getItem(STORAGE_KEY);
+        if (storedCollection) {
+          try {
+            watchCollection = JSON.parse(storedCollection);
+          } catch (e) {
+            console.error("Error parsing stored data:", e);
+            watchCollection = [];
+          }
+        }
+      }
+      persistToBootstrap();
+      renderCollection();
+
+      // Settings modal actions
+      document.getElementById('enableAutosaveAction').addEventListener('click', enableAutosave);
+      document.getElementById('saveHtmlAction').addEventListener('click', async () => {
+        persistToBootstrap();
+        await saveHTMLCrossPlatform();
+      });
+      document.getElementById('saveJsonAction').addEventListener('click', async () => {
+        await saveJSONCrossPlatform();
+      });
+      document.getElementById('importJsonAction').addEventListener('click', () => {
+        document.getElementById('importJsonFile').click();
+      });
+      document.getElementById('importJsonFile').addEventListener('change', (e) => {
+        const file = e.target.files?.[0];
+        if (file) importJSONFromFile(file);
+        e.target.value = '';
+      });
+    }
+
+    loadCollection();
+
+    let WATCHES = []; // your in-memory model
+
+    async function loadWatches() {
+      const r = await fetch('/api/watches');
+      WATCHES = await r.json();
+      renderGallery(WATCHES); // your existing renderer
+    }
+
+    async function saveWatches(updated) {
+      const token = sessionStorage.getItem('WATCH_TOKEN') || prompt('Editor token:');
+      if (!token) return alert('No token entered.');
+      sessionStorage.setItem('WATCH_TOKEN', token);
+
+      const r = await fetch('/api/watches', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify(updated)
+      });
+      if (!r.ok) {
+        const msg = await r.text();
+        alert('Save failed: ' + msg);
+        if (r.status === 401) sessionStorage.removeItem('WATCH_TOKEN');
+        return;
+      }
+      WATCHES = updated;
+      renderGallery(WATCHES);
+    }
+
+    // Call this after DOM ready:
+    loadWatches();
+
+  </script>
+</body>
+</html>
