@@ -1182,6 +1182,17 @@ body[data-theme='dark'] .watch-details {
         <label for="editWatchNotes">Notes/Description:</label>
         <textarea id="editWatchNotes" required></textarea>
 
+        <!-- NEW: Times Worn field -->
+        <label for="editTimesWorn">Times Worn:</label>
+        <input 
+          type="number" 
+          id="editTimesWorn" 
+          inputmode="numeric"
+          min="0" step="1" 
+          pattern="\d*"
+          required
+        >
+
         <label for="editWatchImage">Replace Watch Image (Optional):</label>
         <input 
           type="file" 
@@ -1193,6 +1204,7 @@ body[data-theme='dark'] .watch-details {
       </form>
     </div>
   </div>
+
 
   <!-- Settings Modal (Import only) -->
   <!-- Settings Modal (shows the editor password; no import needed) -->
@@ -1485,9 +1497,14 @@ body[data-theme='dark'] .watch-details {
       const newNotes = document.getElementById('editWatchNotes').value;
       let newImageFile = document.getElementById('editWatchImage').files[0];
 
+      // NEW: get times worn, coerce to non-negative integer
+      let newTimesWorn = parseInt(document.getElementById('editTimesWorn').value, 10);
+      if (!Number.isFinite(newTimesWorn) || newTimesWorn < 0) newTimesWorn = 0;
+
       if (index >= 0 && index < watchCollection.length) {
         watchCollection[index].title = newTitle;
         watchCollection[index].notes = newNotes;
+        watchCollection[index].timesWorn = newTimesWorn; // NEW
 
         if (newImageFile) {
           newImageFile = await convertHeicToJpeg(newImageFile);
@@ -1504,6 +1521,7 @@ body[data-theme='dark'] .watch-details {
         }
       }
     });
+
 
     async function deleteWatch() {
       const watchIndex = slideIndex - 1;
@@ -1549,8 +1567,12 @@ body[data-theme='dark'] .watch-details {
       document.getElementById('editWatchNotes').value = watch.notes;
       document.getElementById('editWatchImage').value = '';
 
+      // NEW: seed Times Worn (default to 0 if missing)
+      document.getElementById('editTimesWorn').value = Number.isFinite(+watch.timesWorn) ? +watch.timesWorn : 0;
+
       openModal('editWatchModal');
     }
+
 
     // ---------------------------
     // Carousel
