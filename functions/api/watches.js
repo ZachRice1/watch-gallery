@@ -1,33 +1,65 @@
-// /api/watches
-// Pages Function using KV for storage
-// Bindings you will add in the dashboard:
-//   KV_WATCHES  -> KV namespace
-//   SAVE_TOKEN  -> a secret for write access
+// ------------------------------------------------------------
+// Cloudflare Pages Function for Watch Gallery Sync
+// ------------------------------------------------------------
+// This file exposes three endpoints:
+//   GET    /api/watches      → returns the current JSON array
+//   POST   /api/watches      → overwrites it (auth required)
+//   DELETE /api/watches      → clears it (auth required)
+//
+// Cloudflare Bindings (set in Pages → Settings → Functions → Bindings):
+//   KV_WATCHES  = your KV namespace
+//   SAVE_TOKEN  = a secret token for authentication
+//
+// KV storage key: "watches.json"
+//
+// ------------------------------------------------------------
 
-export async function onRequestGet(context) {
-  const { env } = context;
-  const json = (await env.KV_WATCHES.get("watches.json")) || "[]";
-  return new Response(json, { headers: { "content-type": "application/json" } });
+const KEY = "watches.json";
+
+// ---------------------- GET ----------------------
+export async function onRequestGet({ env }) {
+  try {
+    // Read the current JSON array from KV (default to empty array)
+    const data = await env.KV_WATCHES.get(KEY);
+    const json = data || "[]";
+    return new Response(json, {
+      headers: { "content-type": "application/json; charset=utf-8" },
+    });
+  } catch (err) {
+    return new Response("Error reading KV: " + err.message, { status: 500 });
+  }
 }
 
-export async function onRequestPost(context) {
-  const { request, env } = context;
+// ---------------------- POST ----------------------
+export async function onRequestPost({ request, env }) {
+  // Simple bearer-token authentication
   const auth = request.headers.get("authorization") || "";
   if (auth !== `Bearer ${env.SAVE_TOKEN}`) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const body = await request.text();      // expect JSON array/object
-  try { JSON.parse(body); } catch { return new Response("Bad JSON", { status: 400 }); }
-  await env.KV_WATCHES.put("watches.json", body);
-  return new Response("ok");
+  try {
+    const bodyText = await request.text();
+    // Validate JSON before saving
+    JSON.parse(bodyText);
+    await env.KV_WATCHES.put(KEY, bodyText);
+    return new Response("ok");
+  } catch (err) {
+    return new Response("Invalid JSON: " + err.message, { status: 400 });
+  }
 }
 
-// Optional: delete resets to empty array
-export async function onRequestDelete(context) {
-  const { request, env } = context;
+// ---------------------- DELETE ----------------------
+export async function onRequestDelete({ request, env }) {
   const auth = request.headers.get("authorization") || "";
-  if (auth !== `Bearer ${env.SAVE_TOKEN}`) return new Response("Unauthorized", { status: 401 });
-  await env.KV_WATCHES.put("watches.json", "[]");
-  return new Response("ok");
+  if (auth !== `Bearer ${env.SAVE_TOKEN}`) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  try {
+    await env.KV_WATCHES.put(KEY, "[]");
+    return new Response("Gallery cleared.");
+  } catch (err) {
+    return new Response("Error clearing KV: " + err.message, { status: 500 });
+  }
 }
