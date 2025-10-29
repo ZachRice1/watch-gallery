@@ -7,9 +7,9 @@
     content="width=device-width, initial-scale=1.0"
   />
   <title>Murray's Timepiece Collection 🕰️</title>
-
-
+  <!-- Keep your existing <style>…</style> block here (unchanged) -->
 </head>
+
 <style>
         /* --- CAROUSEL ROOT VARIABLES --- */
         :root {
@@ -761,9 +761,8 @@
     </svg>
   </button>
 
-  <!-- NEW: Gear button to open Settings modal -->
+  <!-- Settings (Import only) -->
   <button id="settingsButtonFloating" onclick="openModal('settingsModal')" aria-label="Settings">
-    <!-- Gear icon -->
     <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
          stroke-linecap="round" stroke-linejoin="round">
       <circle cx="12" cy="12" r="3"></circle>
@@ -824,24 +823,17 @@
     </div>
   </div>
 
-  <!-- NEW: Settings Modal (houses auto-save + export/import) -->
+  <!-- Settings Modal (Import only) -->
   <div id="settingsModal" class="modal">
     <div class="modal-content settings-modal">
       <span class="close-button" onclick="closeModal('settingsModal')">&times;</span>
       <h2>⚙️ Settings</h2>
       <div class="settings-actions">
-        <button type="button" class="action" id="enableAutosaveAction">Enable Auto-Save (Desktop Chrome/Edge)</button>
-        <button type="button" class="action" id="saveHtmlAction">Save HTML to iCloud (Replace)</button>
-        <button type="button" class="action" id="saveJsonAction">Save JSON to iCloud (Replace)</button>
         <button type="button" class="action" id="importJsonAction">Import JSON</button>
         <input type="file" id="importJsonFile" accept="application/json" style="display:none;">
-        <p class="hint">On iPhone/iPad, “Save” opens the Files sheet so you can tap <b>Replace</b> on the same file.</p>
       </div>
     </div>
   </div>
-
-  <!-- Embedded data that travels with the file -->
-  <script id="bootstrapData" type="application/json"></script>
 
   <script>
     // ---------------------------
@@ -907,7 +899,6 @@
     const LIGHT_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
     const DARK_ICON = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
 
-    const STORAGE_KEY = 'dadWatchCollection';
     const THEME_KEY = 'dadWatchTheme';
     let watchCollection = [];
     let slideIndex = 1;
@@ -972,10 +963,6 @@
       }
     }
 
-    function saveCollectionLocalCache() { 
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(watchCollection)); 
-    }
-
     // ---------------------------
     // HEIC support
     // ---------------------------
@@ -1011,127 +998,45 @@
     }
 
     // ---------------------------
-    // Embedded data (travels with the file)
+    // Cloudflare API wiring
     // ---------------------------
 
-    function readBootstrapData() {
-      try {
-        const tag = document.getElementById('bootstrapData');
-        if (!tag) return null;
-        const txt = tag.textContent?.trim();
-        if (!txt) return null;
-        return JSON.parse(txt);
-      } catch (e) {
-        console.warn('Failed to parse embedded bootstrap data:', e);
-        return null;
+    let WATCHES = []; // optional mirror of API payload
+
+    async function loadWatches() {
+      const r = await fetch('/api/watches', { cache: 'no-store' });
+      WATCHES = await r.json();
+      watchCollection = Array.isArray(WATCHES) ? WATCHES : [];
+      renderCollection();
+    }
+
+    // 🔑 LOCALSTORAGE TOKEN (one-time per device)
+    async function saveWatches(updated) {
+      const TOKEN_KEY = 'WATCH_TOKEN';
+      let token = localStorage.getItem(TOKEN_KEY);
+      if (!token) {
+        token = prompt('Editor token (one-time per device):');
+        if (!token) { alert('No token entered.'); return; }
+        localStorage.setItem(TOKEN_KEY, token);
       }
-    }
 
-    function persistToBootstrap() {
-      const tag = document.getElementById('bootstrapData');
-      if (tag) tag.textContent = JSON.stringify(watchCollection);
-    }
-
-    // ---------------------------
-    // Cross-platform save helpers (HTML + JSON)
-    // ---------------------------
-
-    // Optional: File System Access (desktop Chromium) handle for true overwrite
-    let autosaveHandle = null;
-
-    function fsaSupported() {
-      return !!(window.isSecureContext && 'showSaveFilePicker' in window);
-    }
-
-    async function enableAutosave() {
-      if (!fsaSupported()) {
-        alert("Auto-Save to the same file isn’t supported on this browser. Use 'Save HTML/JSON' to replace the file in iCloud.");
+      const r = await fetch('/api/watches', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify(updated)
+      });
+      if (!r.ok) {
+        const msg = await r.text();
+        if (r.status === 401) {
+          // token changed or wrong: clear so we prompt next time
+          localStorage.removeItem(TOKEN_KEY);
+        }
+        alert('Save failed: ' + msg);
         return;
       }
-      try {
-        const handle = await window.showSaveFilePicker({
-          suggestedName: 'murrays-timepiece-collection.html',
-          types: [{ description: 'HTML File', accept: {'text/html': ['.html', '.htm']} }]
-        });
-        autosaveHandle = handle;
-        alert('Auto-Save enabled for desktop. I will write in place when you choose “Save HTML”.');
-      } catch (e) {
-        // user canceled, ignore
-      }
-    }
-
-    function buildCurrentHTMLString() {
-      const clone = document.documentElement.cloneNode(true);
-      const clonedBootstrap = clone.querySelector('#bootstrapData');
-      if (clonedBootstrap) clonedBootstrap.textContent = JSON.stringify(watchCollection);
-      return '<!DOCTYPE html>\n' + clone.outerHTML;
-    }
-
-    async function shareFileIfPossible(file, title, text) {
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({ files: [file], title, text });
-          return true; // user shared via iOS Files sheet
-        } catch (_) {}
-      }
-      return false;
-    }
-
-    function downloadFile(file, suggestedName) {
-      const url = URL.createObjectURL(file);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = suggestedName;
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => {
-        URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-      }, 0);
-    }
-
-    async function saveHTMLCrossPlatform(filename = 'murrays-timepiece-collection.html') {
-      // Try true in-place write first (desktop Chromium with Auto-Save enabled)
-      if (autosaveHandle) {
-        try {
-          const writable = await autosaveHandle.createWritable();
-          await writable.write(buildCurrentHTMLString());
-          await writable.close();
-          return;
-        } catch (e) {
-          console.warn('Auto-save write failed; falling back:', e);
-        }
-      }
-      // Share sheet on iOS (lets user tap Replace)
-      const htmlText = buildCurrentHTMLString();
-      const file = new File([htmlText], filename, { type: 'text/html' });
-      const shared = await shareFileIfPossible(file, "Murray’s Timepieces", "Save to iCloud Drive");
-      if (shared) return;
-
-      // Download fallback (macOS Safari etc.)
-      downloadFile(file, filename);
-    }
-
-    async function saveJSONCrossPlatform(filename = 'murrays-timepieces.json') {
-      const json = JSON.stringify(watchCollection, null, 2);
-      const file = new File([json], filename, { type: 'application/json' });
-      const shared = await shareFileIfPossible(file, "Murray’s Timepieces (JSON)", "Save to iCloud Drive");
-      if (shared) return;
-      downloadFile(file, filename);
-    }
-
-    async function saveCollectionAfterChange() {
-      // Keep embedded and local cache synced
-      persistToBootstrap();
-      saveCollectionLocalCache();
-
-      // Choose your preferred artifact:
-      // A) One-file approach (recommended)
-      await saveHTMLCrossPlatform();
-
-      // B) If you prefer a sidecar JSON instead, comment the line above
-      //    and uncomment the line below:
-      // await saveJSONCrossPlatform();
+      WATCHES = updated;
+      watchCollection = updated;
+      renderCollection();
     }
 
     // ---------------------------
@@ -1151,17 +1056,15 @@
         const reader = new FileReader();
         reader.onload = async function(event) {
           const newWatch = {
+            id: (crypto?.randomUUID && crypto.randomUUID()) || String(Date.now()),
             title,
             notes,
             image: event.target.result
           };
           watchCollection.push(newWatch);
-          persistToBootstrap();
-          saveCollectionLocalCache();
           closeModal('addWatchModal');
           slideIndex = watchCollection.length;
-          renderCollection();
-          await saveCollectionAfterChange();
+          await saveWatches(watchCollection);
         };
         reader.readAsDataURL(imageFile);
       }
@@ -1181,23 +1084,16 @@
 
         if (newImageFile) {
           newImageFile = await convertHeicToJpeg(newImageFile);
-
           const reader = new FileReader();
           reader.onload = async function(event) {
             watchCollection[index].image = event.target.result;
-            persistToBootstrap();
-            saveCollectionLocalCache();
             closeModal('editWatchModal');
-            renderCollection();
-            await saveCollectionAfterChange();
+            await saveWatches(watchCollection);
           };
           reader.readAsDataURL(newImageFile);
         } else {
-          persistToBootstrap();
-          saveCollectionLocalCache();
           closeModal('editWatchModal');
-          renderCollection();
-          await saveCollectionAfterChange();
+          await saveWatches(watchCollection);
         }
       }
     });
@@ -1209,11 +1105,8 @@
       const watchTitle = watchCollection[watchIndex].title;
       if (confirm(`Are you sure you want to delete the watch: "${watchTitle}"?`)) {
         watchCollection.splice(watchIndex, 1);
-        persistToBootstrap();
-        saveCollectionLocalCache();
         slideIndex = Math.min(slideIndex, Math.max(1, watchCollection.length));
-        renderCollection();
-        await saveCollectionAfterChange();
+        await saveWatches(watchCollection);
       }
     }
 
@@ -1355,10 +1248,7 @@
           const parsed = JSON.parse(reader.result);
           if (!Array.isArray(parsed)) throw new Error('Invalid JSON format');
           watchCollection = parsed;
-          persistToBootstrap();
-          saveCollectionLocalCache();
-          renderCollection();
-          await saveCollectionAfterChange(); // immediately save back
+          await saveWatches(watchCollection); // persist to KV and re-render
         } catch (e) {
           alert('Could not import JSON: ' + e.message);
         }
@@ -1370,7 +1260,7 @@
     // Init
     // ---------------------------
 
-    function loadCollection() {
+    async function loadCollection() {
       // Clock + curved text
       generateCurvedText();
       updateClock();
@@ -1387,33 +1277,10 @@
       });
       getCSSVars();
 
-      // Load data (embedded first, then localStorage)
-      const embedded = readBootstrapData();
-      if (embedded && Array.isArray(embedded)) {
-        watchCollection = embedded;
-      } else {
-        const storedCollection = localStorage.getItem(STORAGE_KEY);
-        if (storedCollection) {
-          try {
-            watchCollection = JSON.parse(storedCollection);
-          } catch (e) {
-            console.error("Error parsing stored data:", e);
-            watchCollection = [];
-          }
-        }
-      }
-      persistToBootstrap();
-      renderCollection();
+      // Load from Cloudflare KV via API
+      await loadWatches();
 
       // Settings modal actions
-      document.getElementById('enableAutosaveAction').addEventListener('click', enableAutosave);
-      document.getElementById('saveHtmlAction').addEventListener('click', async () => {
-        persistToBootstrap();
-        await saveHTMLCrossPlatform();
-      });
-      document.getElementById('saveJsonAction').addEventListener('click', async () => {
-        await saveJSONCrossPlatform();
-      });
       document.getElementById('importJsonAction').addEventListener('click', () => {
         document.getElementById('importJsonFile').click();
       });
@@ -1425,38 +1292,6 @@
     }
 
     loadCollection();
-
-    let WATCHES = []; // your in-memory model
-
-    async function loadWatches() {
-      const r = await fetch('/api/watches');
-      WATCHES = await r.json();
-      renderGallery(WATCHES); // your existing renderer
-    }
-
-    async function saveWatches(updated) {
-      const token = sessionStorage.getItem('WATCH_TOKEN') || prompt('Editor token:');
-      if (!token) return alert('No token entered.');
-      sessionStorage.setItem('WATCH_TOKEN', token);
-
-      const r = await fetch('/api/watches', {
-        method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify(updated)
-      });
-      if (!r.ok) {
-        const msg = await r.text();
-        alert('Save failed: ' + msg);
-        if (r.status === 401) sessionStorage.removeItem('WATCH_TOKEN');
-        return;
-      }
-      WATCHES = updated;
-      renderGallery(WATCHES);
-    }
-
-    // Call this after DOM ready:
-    loadWatches();
-
   </script>
 </body>
 </html>
