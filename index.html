@@ -476,6 +476,7 @@
             box-sizing: border-box;
             background-color: rgba(255, 255, 255, 0.8); 
             color: var(--primary-color);
+            font-size:16px;
         }
         body[data-theme='dark'] .modal-content input[type="text"],
         body[data-theme='dark'] .modal-content textarea {
@@ -705,6 +706,47 @@
             .prev, .next {
                 padding: 12px;         /* was 16px */
                 font-size: 16px;       /* was 18px */
+            }
+
+            /* Make each slide a 2-row grid: image (58%), details (42%) */
+            .carousel-slide:not(.add-slide) {
+              display: grid;
+              grid-template-columns: 1fr;
+              grid-template-rows: 58% 42%;
+              height: var(--slide-height); /* keeps your overall slide sizing */
+              align-items: stretch;
+            }
+
+            /* Top row: image fills its row, never overlaps details */
+            .watch-image {
+              grid-row: 1 / 2;
+              position: relative;
+              width: 100%;
+              height: 100% !important;   /* override earlier 65% rule */
+              object-fit: contain;
+              z-index: 1;
+              transform: none;            /* ensure no translate overlap on mobile */
+              left: 0; top: 0;            /* override earlier centering */
+            }
+
+            /* Bottom row: details get dedicated space and scroll if long */
+            .watch-details {
+              grid-row: 2 / 3;
+              position: relative;         /* you removed absolute—keep it in flow */
+              margin: 0;                  /* no extra push into the image area */
+              max-height: 100%;           /* fill its grid row */
+              overflow-y: auto;           /* long notes scroll inside here */
+              z-index: 2;                 /* sit above the image if needed */
+            }
+
+            /* Keep the glass readability helpers working with the new flow */
+            .watch-details::before {
+              content: "";
+              position: absolute;
+              inset: 0;
+              pointer-events: none;
+              background: radial-gradient(120% 120% at 50% 0%,
+                          rgba(0,0,0,0.30) 0%, transparent 70%);
             }
         }
 
