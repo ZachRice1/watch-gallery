@@ -389,7 +389,7 @@
         .next { right: 30px; }
         .prev { left: 30px; }
         
-        #addWatchButtonFloating, #themeToggle, #randomButton, #editButtonFloating, #deleteButtonFloating {
+        #addWatchButtonFloating, #themeToggle, #randomButton, #editButtonFloating, #deleteButtonFloating,#wornButton {
             position: fixed;
             width: 60px;
             height: 60px;
@@ -409,13 +409,14 @@
             justify-content: center;
             line-height: 1; 
         }
-                
-        #deleteButtonFloating       { right: 380px; bottom: 30px; }
-        #editButtonFloating         { right: 310px; bottom: 30px; }
-        #settingsButtonFloating     { right: 240px; bottom: 30px; }
-        #randomButton               { right: 170px; bottom: 30px; }
-        #themeToggle                { right: 100px; bottom: 30px; }
-        #addWatchButtonFloating     { right: 30px;  bottom: 30px; }
+                        
+        #deleteButtonFloating     { right: 450px; bottom: 30px; }
+        #editButtonFloating       { right: 380px; bottom: 30px; }
+        #settingsButtonFloating   { right: 310px; bottom: 30px; }
+        #wornButton               { right: 240px; bottom: 30px; }  /* NEW */
+        #randomButton             { right: 170px; bottom: 30px; }
+        #themeToggle              { right:  100px; bottom: 30px; }  /* slight tighten */
+        #addWatchButtonFloating   { right:  30px; bottom: 30px; }
 
         .modal { 
             display: none; 
@@ -678,11 +679,20 @@
                bottom: 10px; width: 50px; height: 50px; font-size: 1.3em; 
               }
               
-            #editButtonFloating       { right: 250px; bottom: 10px; width: 50px; height: 50px; }
+            /* #editButtonFloating       { right: 250px; bottom: 10px; width: 50px; height: 50px; }
             #settingsButtonFloating   { right: 190px; bottom: 10px; width: 50px; height: 50px; }
             #randomButton             { right: 130px; bottom: 10px; width: 50px; height: 50px; }
             #themeToggle              { right: 70px;  bottom: 10px; width: 50px; height: 50px; }
-            #addWatchButtonFloating   { right: 10px;  bottom: 10px; width: 50px; height: 50px; font-size: 2em; }
+            #addWatchButtonFloating   { right: 10px;  bottom: 10px; width: 50px; height: 50px; font-size: 2em; } */
+
+
+            #deleteButtonFloating   { right: 340px; bottom: 10px; width: 50px; height: 50px; font-size: 1.3em; }
+            #editButtonFloating     { right: 285px; bottom: 10px; width: 50px; height: 50px; }
+            #settingsButtonFloating { right: 230px; bottom: 10px; width: 50px; height: 50px; }
+            #wornButton             { right: 175px; bottom: 10px; width: 50px; height: 50px; } 
+            #randomButton           { right:  120px; bottom: 10px; width: 50px; height: 50px; }
+            #themeToggle            { right:  65px; bottom: 10px; width: 50px; height: 50px; }
+            #addWatchButtonFloating { right:  10px; bottom: 10px; width: 50px; height: 50px; font-size: 2em; }
 
             .logo-placeholder,
             .logo-container,
@@ -772,7 +782,6 @@
           justify-content: center;
           line-height: 1;
           bottom: 30px;
-          right: 240px; /* sits just to the left of the delete button */
         }
         body[data-theme='dark'] #settingsButtonFloating {
           background-color: var(--dark-accent-color);
@@ -808,10 +817,11 @@
           opacity: 0.75;
         }
 
+        
+
         /* Mobile positions, matching your existing scheme */
         @media (max-width: 900px) {
           #settingsButtonFloating {
-            right: 190px;  /* after delete @ 250px */
             width: 50px;
             height: 50px;
             font-size: 1.3em;
@@ -1023,7 +1033,20 @@ body[data-theme='dark'] .watch-details {
 }
 
 
-
+    #wornButton {
+      background: linear-gradient(145deg, rgba(255,136,195,0.75), rgba(255,175,215,0.6));
+      box-shadow: 0 6px 20px rgba(255,136,195,0.35);
+      color: white;
+    }
+    body[data-theme='dark'] #wornButton {
+      background: linear-gradient(145deg, rgba(233,123,190,0.6), rgba(180,85,160,0.45));
+      box-shadow: 0 6px 20px rgba(233,123,190,0.25);
+    }
+    #wornButton:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(255,136,195,0.35);
+      filter: brightness(1.08);
+    }
     </style>
 
 
@@ -1078,6 +1101,19 @@ body[data-theme='dark'] .watch-details {
     <path d="M16.5 3.5l4 4L7.5 19H3v-4L16.5 3.5z"></path>
   </svg>
 </button>
+
+
+<button id="wornButton" onclick="incrementTimesWorn()" aria-label="Add 1 to Times Worn">
+  <!-- Plus-in-circle icon -->
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+       viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="10"></circle>
+    <line x1="12" y1="8" x2="12" y2="16"></line>
+    <line x1="8" y1="12" x2="16" y2="12"></line>
+  </svg>
+</button>
+
 
 <button id="settingsButtonFloating" onclick="openModal('settingsModal')" aria-label="Settings">
   <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -1350,12 +1386,35 @@ body[data-theme='dark'] .watch-details {
 
     let WATCHES = []; // optional mirror of API payload
 
+    // Load watch data from Cloudflare KV, ensuring each has a timesWorn property
     async function loadWatches() {
-      const r = await fetch('/api/watches', { cache: 'no-store' });
-      WATCHES = await r.json();
-      watchCollection = Array.isArray(WATCHES) ? WATCHES : [];
-      renderCollection();
+      try {
+        const response = await fetch('/api/watches', { cache: 'no-store' });
+        let data = await response.json();
+
+        // --- normalize structure ---
+        // make sure we always have an array, and that each item has timesWorn: 0 if missing
+        if (!Array.isArray(data)) {
+          data = [];
+        }
+
+        watchCollection = data.map(w => ({
+          ...w,                                      // keep existing keys
+          timesWorn: Number.isFinite(+w?.timesWorn)  // ensure it's a number
+            ? +w.timesWorn
+            : 0                                      // default to 0 if missing
+        }));
+
+        WATCHES = watchCollection; // keep global sync
+
+        renderCollection(); // rebuild carousel
+      } catch (err) {
+        console.error("Error loading watches:", err);
+        watchCollection = [];
+        renderCollection();
+      }
     }
+
 
     // 🔑 LOCALSTORAGE TOKEN (one-time per device)
     async function saveWatches(updated) {
@@ -1406,7 +1465,8 @@ body[data-theme='dark'] .watch-details {
             id: (crypto?.randomUUID && crypto.randomUUID()) || String(Date.now()),
             title,
             notes,
-            image: event.target.result
+            image: event.target.result,
+            timesWorn: 0    
           };
           watchCollection.push(newWatch);
           closeModal('addWatchModal');
@@ -1456,6 +1516,28 @@ body[data-theme='dark'] .watch-details {
         await saveWatches(watchCollection);
       }
     }
+
+    async function incrementTimesWorn() {
+      if (!watchCollection.length) return;
+      const idx = slideIndex - 1;
+      if (idx < 0 || idx >= watchCollection.length) return;
+
+      // Skip if we're on the "Add" slide
+      const slides = document.getElementsByClassName("carousel-slide");
+      if (slideIndex === slides.length) return;
+
+      const w = watchCollection[idx];
+      w.timesWorn = Number.isFinite(+w.timesWorn) ? (+w.timesWorn + 1) : 1;
+
+      // Optimistic UI: update count immediately
+      const activeSlide = slides[slideIndex - 1];
+      const countEl = activeSlide?.querySelector('.times-worn-count');
+      if (countEl) countEl.textContent = w.timesWorn;
+
+      // Persist
+      await saveWatches(watchCollection);
+    }
+
 
     function openEditModalForCurrentSlide() {
       if (slideIndex > watchCollection.length || watchCollection.length === 0) return;
@@ -1515,15 +1597,15 @@ body[data-theme='dark'] .watch-details {
         slide.className = 'carousel-slide';
         slide.setAttribute('data-index', index + 1);
         slide.setAttribute('data-watch-index', index);
-        
-        slide.innerHTML = `
-          <img class="watch-image" src="${watch.image}" alt="${watch.title}">
-          <div class="watch-details">
-              <h2>${watch.title}</h2>
-              <p><strong>Notes:</strong></p>
-              <p>${watch.notes}</p>
-          </div>
-        `;
+              
+      slide.innerHTML = `
+        <img class="watch-image" src="${watch.image}" alt="${watch.title}">
+        <div class="watch-details">
+            <h2>${watch.title}</h2>
+            <p><strong>Times worn:</strong> <span class="times-worn-count">${Number(watch.timesWorn || 0)}</span></p>
+            <p><strong>Notes:</strong> ${watch.notes}</p>
+        </div>
+      `;
         carouselSlides.appendChild(slide);
       });
       
